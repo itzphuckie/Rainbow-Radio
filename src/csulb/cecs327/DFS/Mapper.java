@@ -1,4 +1,4 @@
-package csulb.cecs327.MapReduce;
+package csulb.cecs327.DFS;
 
 import com.google.gson.JsonObject;
 
@@ -9,7 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public abstract class Mapper implements MapReduceInterface, Serializable {
-    //TODO These 2 methods 
+    //TODO These 2 methods
     /**
      * Distribute the words throughout the file system, putting the word according to its guid between 2 processes
      * @param key

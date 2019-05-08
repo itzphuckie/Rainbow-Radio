@@ -8,12 +8,20 @@ package csulb.cecs327.DFS;
  * @since 03-3-2019
  */
 
-import java.rmi.*;
-import java.rmi.registry.*;
-import java.rmi.server.*;
-import java.net.*;
-import java.util.*;
-import java.io.*;
+import com.google.gson.*;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.TreeMap;
 
 /**
  * Chord extends from UnicastRemoteObject to support RMI.
@@ -503,36 +511,69 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
                 }
             }
         } catch (RemoteException e) {
-            System.out.println("Cannot retrive id of successor or predecessor");
+            System.out.println("Cannot retrieve id of successor or predecessor");
         }
     }
 
-    //TODO All these methods
+
 
     /**
      * Remote methods for Map Reduce
      */
-    public void onChordSize(long source, int n) {
+    public void mapContext (DFS.PagesJson page, Mapper mapper, DFS coordinator, String file) throws IOException {
+
+        long guid = page.getGUID();
+        ChordMessageInterface peer = coordinator.chord.locateSuccessor(guid);
+        RemoteInputFileStream content = peer.get(guid);
+
+        content.connect();
+        Scanner scan = new Scanner(content);
+        scan.useDelimiter("\\A");
+        String pageDataString = "";
+        while (scan.hasNext()) {
+            pageDataString += scan.next();
+        }
+        scan.close();
+        JsonParser parser = new JsonParser();
+        JsonObject object = parser.parse(pageDataString).getAsJsonObject();
+
+        JsonArray array = object.getAsJsonArray("songsInPage");
+
+        for (JsonElement item : array) {
+            JsonObject innerObject = new Gson().fromJson(item.getAsString(), JsonObject.class);
+
+            mapper.map("key", innerObject, coordinator, file);
+        }
+
+        coordinator.onPageCompleted(file);
+
 
     }
 
-    public void OnPageCompleted(String file) {
 
+    public int onNetworkSize(long source, int n) throws Exception
+    {
+        while(guid!=locateSuccessor(guid).getId()) {
+
+        }
+        return n;
     }
 
-    public void mapContext(DFS.PagesJson page, MapReduceInterface mapper, DFS coordinator, String file) {
+    public void onChordSize(long source, int n) throws Exception
+    {
+        if(source != guid)
+        {
+            successor.onNetworkSize(source, n++);
 
+        }
+        else
+        {
+            int size = n;
+        }
     }
 
-    public void reduceContext(DFS.PagesJson page, MapReduceInterface reducer, DFS coordinator, String file) {
-    }
-
-    public void addKeyValue(String key, String) {
-    }
-
-    public void emit(key, value, file) {
-    }
-
-    public bulk(page) {
+    public void bulk(long page, TreeMap<String, JsonObject> tree)
+    {
+        System.out.println(page + " : " + tree.values().toString());
     }
 }
